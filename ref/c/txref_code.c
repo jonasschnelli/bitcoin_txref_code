@@ -26,7 +26,8 @@
 #include "txref_code.h"
 
 /* the Bech32 human readable part for tx-ref codes */
-static const char txref_hrp[] = "tx";
+static const char TXREF_BECH32_HRP[] = "tx";
+static const unsigned int TXREF_LEN = 17;
 
 int btc_txref_encode(
     char *output,
@@ -34,13 +35,15 @@ int btc_txref_encode(
     int block_height,
     int tx_pos
 ) {
+    int res;
+    /* Bech32 requires a array of 5bit chunks */
+    uint8_t short_id[8] = {0};
+    size_t olen;
+
     /* ensure we stay in boundaries */
     if (block_height > 0x1FFFFF || tx_pos > 0x1FFF || magic > 0x1F) {
         return -1;
     }
-
-    /* Bech32 requires a array of 5bit chunks */
-    uint8_t short_id[8] = {0};
 
     /* set the magic */
     short_id[0] = magic;
@@ -59,7 +62,15 @@ int btc_txref_encode(
     short_id[7] |= ((tx_pos & 0x1F00) >> 8);
 
     /* Bech32 encode the 8x5bit packages */
-    int res = bech32_encode(output, txref_hrp, short_id, 8);
+    res = bech32_encode(output, TXREF_BECH32_HRP, short_id, 8);
+
+    /* add the dashes */
+    olen = strlen(output);
+    memcpy(output+olen+2, output+olen-2, 3); //including 0 byte
+    memcpy(output+olen-3, output+olen-6, 4);
+    memcpy(output+olen-8, output+olen-10, 4);
+    memcpy(output+olen-13, output+olen-14, 4);
+    output[3] = '-'; output[8] = '-'; output[13] = '-'; output[18] = '-';
     return res;
 }
 
@@ -69,23 +80,38 @@ int btc_txref_decode(
     int *block_height,
     int *tx_pos
 ) {
-
-    /* max 17 chars are allowed for now */
-    if (strlen(txref_id) > 17) {
-        return -1;
-    }
-
-    /* Bech32 decode */
+    unsigned int i;
     size_t outlen = 0;
     uint8_t buf[9] = {0};
     char tp[11];
-    int res = bech32_decode(tp, buf, &outlen, txref_id);
+    int res;
+
+    /* max TXREF_LEN (+4 dashes) chars are allowed for now */
+    if (strlen(txref_id) > TXREF_LEN+4) {
+        return -1;
+    }
+    char txref_id_no_d[TXREF_LEN+1]; //+1 for the null byte term.
+    memset(txref_id_no_d, 0, sizeof(txref_id_no_d));
+
+    for(i = 0; i < strlen(txref_id); i++) {
+        if (txref_id[i]!='-') {
+            txref_id_no_d[strlen(txref_id_no_d)] = txref_id[i];
+        }
+    }
+
+    /* Bech32 decode */
+
+    res = bech32_decode(tp, buf, &outlen, txref_id_no_d);
+    /* ensure we have 8x5bit*/
+    if (outlen != 8) {
+        return -1;
+    }
     if (!res) {
         return res;
     }
 
     /* make sure the human readable part matches */
-    if (strncmp(tp, txref_hrp, 2) != 0) {
+    if (strncmp(tp, TXREF_BECH32_HRP, 2) != 0) {
         return -1;
     }
 

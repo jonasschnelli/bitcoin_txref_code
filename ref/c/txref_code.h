@@ -26,9 +26,10 @@
 
 /** Encodes a transaction reference
  *
- *  Out: output      :  Pointer to a buffer of size 17+1 bytes that
+ *  Out: output      :  Pointer to a buffer of size 21+1 bytes that
  *                      will be updated to contain the null-terminated Bech32 string.
  *  In: magic        :  5bit magic that will be place in the inner Bech32 part.
+ *                      (ONLY 5bit magic (0x0 to 0x7) are supported for now)
  *      block_height :  The block height to encode
  *      tx_pos       :  The tx position to encode
  *  Returns 1 if successful.
@@ -44,6 +45,7 @@ int btc_txref_encode(
  *
  *  In: txref_id      :  Pointer to tx-ref encoded null-terminated Bech32 string.
  *  Out: magic        :  5bit magic (as char) that will contain the used magic during encoding
+ *                       (ONLY 5bit magic (0x0 to 0x7) are supported for now)
  *       block_height :  Pointer to integer the will be updated with the decoded block height
  *       tx_pos       :  Pointer to integer the will be updated with the decoded tx position
  *  Returns 1 if successful.

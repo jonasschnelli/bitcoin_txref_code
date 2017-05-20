@@ -1,0 +1,82 @@
+language: c
+
+cache:
+  apt: true
+  pip: true
+
+matrix:
+    fast_finish:
+        - true
+    include:
+      - os: osx
+        compiler: clang
+        env: RUN_TESTS="yes"
+      - os: linux
+        compiler: x86_64-w64-mingw32-gcc
+        env: RUN_WIN_TESTS="yes"
+        addons:
+          apt:
+            packages:
+              - binutils-mingw-w64
+              - g++-mingw-w64-x86-64
+              - gcc-mingw-w64
+              - wine
+      - os: linux
+        compiler: gcc
+        env: RUN_TESTS="yes" VALGRIND_UNIT_TESTS="yes" SUBMIT_COVERALLS="yes"
+        addons:
+          apt:
+            packages:
+              - valgrind
+      - os: linux
+        compiler: arm-linux-gnueabihf-gcc
+        env: HOST="arm-linux-gnueabihf" CROSS_COMPILE="yes"
+        addons:
+          apt:
+            packages:
+              - g++-arm-linux-gnueabihf
+      - os: linux
+        compiler: gcc
+        env: BUILD_FLAGS=" -m32"
+        addons:
+          apt:
+            packages:
+              - g++-multilib
+
+before_install:
+  - if [ "${SUBMIT_COVERALLS}" = "yes" ]; then pip install --user git+git://github.com/eddyxu/cpp-coveralls.git; fi
+
+script: 
+    - if [ "$SUBMIT_COVERALLS" == "yes" ]; then
+        cd ref/c/
+        && $CC -v -fprofile-arcs -ftest-coverage -g -O0 txref_code.c segwit_addr.c tests.c -o test
+        && ls -la
+        && cd .. && cd ..
+        ;
+      else
+        cd ref/c/
+        && $CC -v -O3 $BUILD_FLAGS txref_code.c segwit_addr.c tests.c -o test
+        && ls -la
+        && cd .. && cd ..
+        ;
+      fi
+    - if [ "$VALGRIND_UNIT_TESTS" == "yes" ]; then
+        cd ref/c/
+        && valgrind --track-origins=yes --leak-check=full --error-exitcode=1 ./test
+        && cd .. && cd ..
+        ;
+      elif [ "$RUN_WIN_TESTS" == "yes" ]; then
+        cd ref/c/
+        && mv test test.exe
+        && wine test.exe
+        && cd .. && cd ..
+        ;
+      elif [ "$RUN_TESTS" == "yes" ]; then
+        cd ref/c/
+        && ./test
+        && cd .. && cd ..
+        ;
+      fi
+
+after_success:
+  - if [ "$SUBMIT_COVERALLS" == "yes" ]; then coveralls --verbose -e $TRAVIS_BUILD_DIR/ref/c/segwit_addr.c -x c -b $TRAVIS_BUILD_DIR/ref/c -r $TRAVIS_BUILD_DIR/ref/c --gcov-options '\-lp'; fi;

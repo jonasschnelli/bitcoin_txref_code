@@ -25,13 +25,12 @@
 #include "segwit_addr.h"
 #include "txref_code.h"
 
-/* the Bech32 human readable part for tx-ref codes */
-static const char TXREF_BECH32_HRP[] = "tx";
-static const unsigned int TXREF_LEN = 17;
+static const unsigned int TXREF_LEN_WITHOUT_HRP = 15;
 
 int btc_txref_encode(
     char *output,
-    char magic,
+    const char *hrp,
+    const char magic,
     int block_height,
     int tx_pos
 ) {
@@ -62,7 +61,9 @@ int btc_txref_encode(
     short_id[7] |= ((tx_pos & 0x1F00) >> 8);
 
     /* Bech32 encode the 8x5bit packages */
-    res = bech32_encode(output, TXREF_BECH32_HRP, short_id, 8);
+    const char *hrptouse = (hrp != NULL ? hrp : TXREF_BECH32_HRP_MAINNET);
+    int hrplen = strlen(hrptouse);
+    res = bech32_encode(output, hrptouse, short_id, 8);
 
     /* add the dashes */
     olen = strlen(output);
@@ -70,27 +71,27 @@ int btc_txref_encode(
     memcpy(output+olen-3, output+olen-6, 4);
     memcpy(output+olen-8, output+olen-10, 4);
     memcpy(output+olen-13, output+olen-14, 4);
-    output[3] = '-'; output[8] = '-'; output[13] = '-'; output[18] = '-';
+    output[1+hrplen] = '-'; output[6+hrplen] = '-'; output[11+hrplen] = '-'; output[16+hrplen] = '-';
     return res;
 }
 
 int btc_txref_decode(
     const char *txref_id,
+    char *hrp,
     char *magic,
     int *block_height,
     int *tx_pos
 ) {
     unsigned int i;
     size_t outlen = 0;
-    uint8_t buf[9] = {0};
-    char tp[11];
+    uint8_t buf[strlen(txref_id)];
     int res;
 
-    /* max TXREF_LEN (+4 dashes) chars are allowed for now */
-    if (strlen(txref_id) > TXREF_LEN+4) {
+    /* max TXREF_LEN_WITHOUT_HRP (+4 dashes) chars are allowed for now */
+    if (strlen(txref_id) < TXREF_LEN_WITHOUT_HRP+4) {
         return -1;
     }
-    char txref_id_no_d[TXREF_LEN+1]; //+1 for the null byte term.
+    char txref_id_no_d[strlen(txref_id)]; //+1 for the null byte term.
     memset(txref_id_no_d, 0, sizeof(txref_id_no_d));
 
     for(i = 0; i < strlen(txref_id); i++) {
@@ -101,18 +102,13 @@ int btc_txref_decode(
 
     /* Bech32 decode */
 
-    res = bech32_decode(tp, buf, &outlen, txref_id_no_d);
+    res = bech32_decode(hrp, buf, &outlen, txref_id_no_d);
     /* ensure we have 8x5bit*/
     if (outlen != 8) {
         return -1;
     }
     if (!res) {
         return res;
-    }
-
-    /* make sure the human readable part matches */
-    if (strncmp(tp, TXREF_BECH32_HRP, 2) != 0) {
-        return -1;
     }
 
     /* set the magic */

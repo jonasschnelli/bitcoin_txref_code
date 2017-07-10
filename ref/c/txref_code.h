@@ -33,14 +33,16 @@ static const char TXREF_BECH32_HRP_TESTNET[] = "txtest";
 
 /** Encodes a transaction reference
  *
- *  Out: *output      :  Pointer to a buffer of size strlen(hrp) + 19 + 1(0 byte) that
- *                      will be updated to contain the null-terminated Bech32 string.
+ *  Out: *output      :  Pointer to a buffer of size strlen(hrp) + 21 + 1(0 byte) that
+ *                       will be updated to contain the null-terminated Bech32 string.
  *  In:  hrp          :  Human readable part ("tx" for mainnet, "testtx" for testnet, etc.)
  *                    :  If NULL, mainnet's "tx" will be used
- *.      magic        :  5bit magic that will be place in the inner Bech32 part.
+ *       magic        :  5bit magic that will be place in the inner Bech32 part.
  *                      (ONLY 5bit magic (0x0 to 0x7) are supported for now)
  *       block_height :  The block height to encode
  *       tx_pos       :  The tx position to encode
+ *       non_standard :  If set to 1, the limits for height and txpos are 0x3FFFFFF (height)
+ *                       and 0x3FFFF (pos) and, the output will be 2 chars longer
  *  Returns 1 if successful.
  */
 int btc_txref_encode(
@@ -48,7 +50,8 @@ int btc_txref_encode(
     const char *hrp,
     const char magic,
     int block_height,
-    int tx_pos
+    int tx_pos,
+    int non_standard
 );
 
 /** Decodes a transaction reference

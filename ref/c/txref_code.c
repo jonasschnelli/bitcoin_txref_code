@@ -32,15 +32,20 @@ int btc_txref_encode(
     const char *hrp,
     const char magic,
     int block_height,
-    int tx_pos
+    int tx_pos,
+    int non_standard
 ) {
     int res;
     /* Bech32 requires a array of 5bit chunks */
-    uint8_t short_id[8] = {0};
+    uint8_t short_id[10] = {0};
     size_t olen;
 
     /* ensure we stay in boundaries */
-    if (block_height > 0x1FFFFF || tx_pos > 0x1FFF || magic > 0x1F) {
+    if ( 
+          (non_standard == 0 && (block_height > 0x1FFFFF || tx_pos > 0x1FFF || magic > 0x1F))
+          ||
+          (non_standard == 1 && (block_height > 0x3FFFFFF || tx_pos > 0x3FFFF || magic > 0x1F))
+       ) {
         return -1;
     }
 
@@ -54,24 +59,46 @@ int btc_txref_encode(
     short_id[2] |= ((block_height & 0x1F0) >> 4);
     short_id[3] |= ((block_height & 0x3E00) >> 9);
     short_id[4] |= ((block_height & 0x7C000) >> 14);
-    short_id[5] |= ((block_height & 0x180000) >> 19);
+    if (non_standard == 0) {
+      short_id[5] |= ((block_height & 0x180000) >> 19);
+      short_id[5] |= ((tx_pos & 0x7) << 2);
+      short_id[6] |= ((tx_pos & 0xF8) >> 3);
+      short_id[7] |= ((tx_pos & 0x1F00) >> 8);
+    }
+    else {
+      // use extended blockheight (up to 0x3FFFFFF)
+      // use extended txpos (up to 0x3FFFF)
+      short_id[5] |= ((block_height & 0xF80000) >> 19);
+      short_id[6] |= ((block_height & 0x3000000) >> 24);
 
-    short_id[5] |= ((tx_pos & 0x7) << 2);
-    short_id[6] |= ((tx_pos & 0xF8) >> 3);
-    short_id[7] |= ((tx_pos & 0x1F00) >> 8);
+      short_id[6] |= ((tx_pos & 0x7) << 2);
+      short_id[7] |= ((tx_pos & 0xF8) >> 3);
+      short_id[8] |= ((tx_pos & 0x1F00) >> 8);
+      short_id[9] |= ((tx_pos & 0x3E000) >> 13);
+    }
 
     /* Bech32 encode the 8x5bit packages */
     const char *hrptouse = (hrp != NULL ? hrp : TXREF_BECH32_HRP_MAINNET);
     int hrplen = strlen(hrptouse);
-    res = bech32_encode(output, hrptouse, short_id, 8);
+    res = bech32_encode(output, hrptouse, short_id, (non_standard == 1 ? 10 : 8));
 
     /* add the dashes */
     olen = strlen(output);
-    memcpy(output+olen+2, output+olen-2, 3); //including 0 byte
-    memcpy(output+olen-3, output+olen-6, 4);
-    memcpy(output+olen-8, output+olen-10, 4);
-    memcpy(output+olen-13, output+olen-14, 4);
-    output[1+hrplen] = '-'; output[6+hrplen] = '-'; output[11+hrplen] = '-'; output[16+hrplen] = '-';
+    if (non_standard == 0) {
+      memcpy(output+olen+2, output+olen-2, 3); //including 0 byte
+      memcpy(output+olen-3, output+olen-6, 4);
+      memcpy(output+olen-8, output+olen-10, 4);
+      memcpy(output+olen-13, output+olen-14, 4);
+      output[1+hrplen] = '-'; output[6+hrplen] = '-'; output[11+hrplen] = '-'; output[16+hrplen] = '-';
+    }
+    else {
+      // use 16 char encoding (test networks)
+      memcpy(output+olen, output+olen-4, 5); //including 0 byte
+      memcpy(output+olen-5, output+olen-8, 4);
+      memcpy(output+olen-10, output+olen-12, 4);
+      memcpy(output+olen-15, output+olen-16, 4);
+      output[1+hrplen] = '-'; output[6+hrplen] = '-'; output[11+hrplen] = '-'; output[16+hrplen] = '-';
+    }
     return res;
 }
 
@@ -101,10 +128,9 @@ int btc_txref_decode(
     }
 
     /* Bech32 decode */
-
     res = bech32_decode(hrp, buf, &outlen, txref_id_no_d);
-    /* ensure we have 8x5bit*/
-    if (outlen != 8) {
+    /* ensure we have 8x5bit or 10x5bit (test-networks) */
+    if (outlen != 8 && outlen != 10) {
         return -1;
     }
     if (!res) {
@@ -119,12 +145,25 @@ int btc_txref_decode(
     *block_height |= (buf[2] << 4);
     *block_height |= (buf[3] << 9);
     *block_height |= (buf[4] << 14);
-    *block_height |= ((buf[5] & 0x03) << 19);
+    if (outlen == 8) {
+      *block_height |= ((buf[5] & 0x03) << 19);
 
-    /* set the tx position */
-    *tx_pos = ((buf[5] & 0x1C) >> 2);
-    *tx_pos |= (buf[6] << 3);
-    *tx_pos |= (buf[7] << 8);
+      /* set the tx position */
+      *tx_pos = ((buf[5] & 0x1C) >> 2);
+      *tx_pos |= (buf[6] << 3);
+      *tx_pos |= (buf[7] << 8);
+    }
+    else {
+      /* use extended blockheight / txpos (test networks) */
+      *block_height |= (buf[5] << 19);
+      *block_height |= ((buf[6] & 0x03) << 24);
+
+      /* set the tx position */
+      *tx_pos = ((buf[6] & 0x1C) >> 2);
+      *tx_pos |= (buf[7] << 3);
+      *tx_pos |= (buf[8] << 8);
+      *tx_pos |= (buf[9] << 13);
+    }
 
     return 1;
 }

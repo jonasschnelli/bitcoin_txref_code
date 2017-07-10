@@ -123,7 +123,7 @@ static struct test_vector test_vectors[] = {
     {
         0xB,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-t7ll-llll-gey7-ez", /* valid Bech32, but 6x5bit packages instead of 8 */
+        "tx1-t7ll-llll-gey7-ez",
         2097151,
         8191,
         0,0 /* ignore encoding */
@@ -131,7 +131,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rk63-uvxf-9pqc-sy", /* valid Bech32, but 6x5bit packages instead of 8 */
+        "tx1-rk63-uvxf-9pqc-sy",
         467883,
         2355,
         0,0 /* ignore encoding */
@@ -139,7 +139,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_TESTNET,
         TXREF_BECH32_HRP_TESTNET,
-        "txtest1-xk63-uvxf-h2vs-3q", /* valid Bech32, but 6x5bit packages instead of 8 */
+        "txtest1-xk63-uvxf-h2vs-3q",
         467883,
         2355,
         0,0 /* ignore encoding */

@@ -20,7 +20,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rjk0-u5ng-4jsf-mc",
+        "tx1:rjk0-u5ng-4jsf-mc",
         466793,
         2205,
         0,0,0
@@ -28,7 +28,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rjk0-u5n1-2jsi-mc", /* error correct test >2tsi< instead of >4jsf<*/
+        "tx1:rjk0-u5n1-2jsi-mc", /* error correct test >2tsi< instead of >4jsf<*/
         466793,
         2205,
         1,0,0
@@ -36,7 +36,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rqqq-qqqq-qmhu-qk",
+        "tx1:rqqq-qqqq-qmhu-qk",
         0,
         0,
         0,0,0
@@ -44,7 +44,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rzqq-qqqq-uvlj-ez",
+        "tx1:rzqq-qqqq-uvlj-ez",
         1,
         0,
         0,0,0
@@ -52,7 +52,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rjk0-u5ng-4jsf-mc", /* complete invalid */
+        "tx1:rjk0-u5ng-4jsf-mc", /* complete invalid */
         0,
         0,
         1,1,0 /* enc & dec must fail */
@@ -60,7 +60,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-r7ll-lrar-a27h-kt",
+        "tx1:r7ll-lrar-a27h-kt",
         2097151, /* last valid block height with current enc/dec version is 0x1FFFFF*/
         1000,
         0,0,0
@@ -76,7 +76,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-r7ll-llll-khym-tq",
+        "tx1:r7ll-llll-khym-tq",
         2097151, /* last valid block height with current enc/dec version is 0x1FFFFF*/
         8191, /* last valid tx pos is 0x1FFF */
         0,0,0
@@ -92,7 +92,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-r7ll-lrqq-vq5e-gg",
+        "tx1:r7ll-lrqq-vq5e-gg",
         2097151, /* last valid block height with current enc/dec version is 0x1FFFFF*/
         0,
         0,0,0
@@ -100,7 +100,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rqqq-qull-6v87-r7",
+        "tx1:rqqq-qull-6v87-r7",
         0,
         8191, /* last valid tx pos is 0x1FFF */
         0,0,0
@@ -108,7 +108,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rjk0-u5ng-gghq-fkg7", /* valid Bech32, but 10x5bit packages instead of 8 */
+        "tx1:rjk0-u5ng-gghq-fkg7", /* valid Bech32, but 10x5bit packages instead of 8 */
         0,
         0,
         3,2,0 /* ignore encoding */
@@ -116,7 +116,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rjk0-u5qd-s43z", /* valid Bech32, but 6x5bit packages instead of 8 */
+        "tx1:rjk0-u5qd-s43z", /* valid Bech32, but 6x5bit packages instead of 8 */
         0,
         0,
         3,2,0 /* ignore encoding */
@@ -124,7 +124,7 @@ static struct test_vector test_vectors[] = {
     {
         0xB,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-t7ll-llll-gey7-ez",
+        "tx1:t7ll-llll-gey7-ez",
         2097151,
         8191,
         0,0,0 /* ignore encoding */
@@ -132,7 +132,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_MAINNET,
         TXREF_BECH32_HRP_MAINNET,
-        "tx1-rk63-uvxf-9pqc-sy",
+        "tx1:rk63-uvxf-9pqc-sy",
         467883,
         2355,
         0,0,0 /* ignore encoding */
@@ -140,7 +140,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_TESTNET,
         TXREF_BECH32_HRP_TESTNET,
-        "txtest1-xk63-uqvx-fqx8-xqr8",
+        "txtest1:xk63-uqvx-fqx8-xqr8",
         467883,
         2355,
         0,0,1 /* ignore encoding */
@@ -148,7 +148,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_TESTNET,
         TXREF_BECH32_HRP_TESTNET,
-        "txtest1-xqqq-qqqq-qqkn-3gh9",
+        "txtest1:xqqq-qqqq-qqkn-3gh9",
         0,
         0,
         0,0,1 /* ignore encoding */
@@ -156,7 +156,7 @@ static struct test_vector test_vectors[] = {
     {
         TXREF_MAGIC_BTC_TESTNET,
         TXREF_BECH32_HRP_TESTNET,
-        "txtest1-x7ll-llll-llj9-t9dk",
+        "txtest1:x7ll-llll-llj9-t9dk",
         0x3FFFFFF,
         0x3FFFF,
         0,0,1 /* ignore encoding */

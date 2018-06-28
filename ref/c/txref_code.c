@@ -84,21 +84,21 @@ int btc_txref_encode(
     /* add the dashes */
     olen = strlen(output);
     if (non_standard == 0) {
-      memcpy(output+olen+2, output+olen-2, 2); //including 0 byte
+      memmove(output+olen+2, output+olen-2, 2); //including 0 byte
       output[olen+4] = 0;
-      memcpy(output+olen-3, output+olen-6, 4);
-      memcpy(output+olen-8, output+olen-10, 4);
-      memcpy(output+olen-13, output+olen-14, 4);
-      output[1+hrplen] = '-'; output[6+hrplen] = '-'; output[11+hrplen] = '-'; output[16+hrplen] = '-';
+      memmove(output+olen-3, output+olen-6, 4);
+      memmove(output+olen-8, output+olen-10, 4);
+      memmove(output+olen-13, output+olen-14, 4);
+      output[1+hrplen] = ':'; output[6+hrplen] = '-'; output[11+hrplen] = '-'; output[16+hrplen] = '-';
     }
     else {
       // use 16 char encoding (test networks)
-      memcpy(output+olen, output+olen-4, 4); //including 0 byte
+      memmove(output+olen, output+olen-4, 4); //including 0 byte
       output[olen+4] = 0;
-      memcpy(output+olen-5, output+olen-8, 4);
-      memcpy(output+olen-10, output+olen-12, 4);
-      memcpy(output+olen-15, output+olen-16, 4);
-      output[1+hrplen] = '-'; output[6+hrplen] = '-'; output[11+hrplen] = '-'; output[16+hrplen] = '-';
+      memmove(output+olen-5, output+olen-8, 4);
+      memmove(output+olen-10, output+olen-12, 4);
+      memmove(output+olen-15, output+olen-16, 4);
+      output[1+hrplen] = ':'; output[6+hrplen] = '-'; output[11+hrplen] = '-'; output[16+hrplen] = '-';
     }
     return res;
 }
@@ -115,7 +115,7 @@ int btc_txref_decode(
     uint8_t buf[strlen(txref_id)];
     int res;
 
-    /* max TXREF_LEN_WITHOUT_HRP (+4 dashes) chars are allowed for now */
+    /* max TXREF_LEN_WITHOUT_HRP (+4 separators) chars are allowed for now */
     if (strlen(txref_id) < TXREF_LEN_WITHOUT_HRP+4) {
         return -1;
     }
@@ -123,7 +123,7 @@ int btc_txref_decode(
     memset(txref_id_no_d, 0, sizeof(txref_id_no_d));
 
     for(i = 0; i < strlen(txref_id); i++) {
-        if (txref_id[i]!='-') {
+        if (txref_id[i]!='-' && txref_id[i]!=':') {
             txref_id_no_d[strlen(txref_id_no_d)] = txref_id[i];
         }
     }
